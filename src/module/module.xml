@@ -1,0 +1,13 @@
+<module xmlns="urn:jboss:module:1.0" name="${project.groupId}.${project.artifactId}">
+  <resources>
+    <resource-root path="${project.artifactId}-${project.version}.${project.packaging}" />
+  </resources>
+  <dependencies>
+    <module name="org.camunda.bpm.camunda-engine" />
+    <module name="org.camunda.bpm.model.camunda-bpmn-model" />
+    <module name="org.slf4j" />
+  </dependencies>
+  <!-- Consider adding dependency : 
+  <module name="be.nrb.o2.camunda.incident-handler-plugin"/>
+  in ${wildfly_home}\modules\org\camunda\bpm\wildfly\camunda-wildfly-subsystem\main\module.xml -->
+</module>

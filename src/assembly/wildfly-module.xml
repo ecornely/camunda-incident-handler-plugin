@@ -1,0 +1,28 @@
+<assembly xmlns="http://maven.apache.org/ASSEMBLY/2.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/ASSEMBLY/2.0.0 http://maven.apache.org/xsd/assembly-2.0.0.xsd">
+  <id>wildfly-module</id>
+  <formats>
+    <format>zip</format>
+  </formats>
+  <includeBaseDirectory>true</includeBaseDirectory>
+  <baseDirectory>/be/nrb/o2/camunda/${project.artifactId}</baseDirectory>
+  <fileSets>
+    <fileSet>
+      <outputDirectory>/main</outputDirectory>
+      <directory>${basedir}/src/module</directory>
+      <includes>
+        <include>**/*</include>
+      </includes>
+      <filtered>true</filtered>
+    </fileSet>
+  </fileSets>
+  <dependencySets>
+    <dependencySet>
+      <outputDirectory>/main</outputDirectory>
+      <useProjectArtifact>true</useProjectArtifact>
+      <includes>
+        <include>*:${project.artifactId}</include>
+      </includes>
+      <outputFileNameMapping>${artifact.artifactId}-${artifact.version}.${artifact.extension}</outputFileNameMapping>
+    </dependencySet>
+  </dependencySets>
+</assembly>
