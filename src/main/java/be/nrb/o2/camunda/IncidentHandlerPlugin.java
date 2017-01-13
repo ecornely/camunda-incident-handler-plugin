@@ -14,10 +14,9 @@ public class IncidentHandlerPlugin extends AbstractProcessEnginePlugin {
 
   @Override
   public void preInit(ProcessEngineConfigurationImpl processEngineConfiguration) {
-    LoggerFactory.getLogger(this.getClass()).warn("This plugin is preInit...");
     CompositeHistoryEventHandler historyEventHandler = new CompositeHistoryEventHandler();
     HistoryEventHandler previousHEH = processEngineConfiguration.getHistoryEventHandler();
-    LoggerFactory.getLogger(this.getClass()).warn("The existing HistoryEventHandler is {}", previousHEH);
+    LoggerFactory.getLogger(this.getClass()).debug("The existing HistoryEventHandler is {}", previousHEH);
     if(previousHEH!=null){
       historyEventHandler.add(previousHEH);
     }else{
@@ -25,7 +24,7 @@ public class IncidentHandlerPlugin extends AbstractProcessEnginePlugin {
     }
     historyEventHandler.add(HISTORY_EVENT_HANDLER);
     processEngineConfiguration.setHistoryEventHandler(historyEventHandler);
-    LoggerFactory.getLogger(this.getClass()).warn("The new HistoryEventHandler is {}", historyEventHandler);
+    LoggerFactory.getLogger(this.getClass()).debug("The new HistoryEventHandler is {}", historyEventHandler);
   }
 
   @Override

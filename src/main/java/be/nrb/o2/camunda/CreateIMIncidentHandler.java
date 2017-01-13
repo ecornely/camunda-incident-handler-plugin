@@ -18,13 +18,12 @@ import org.slf4j.LoggerFactory;
 
 public class CreateIMIncidentHandler implements HistoryEventHandler {
 
+  private String incidentWorkflowKey = "CreateIM";
   private ProcessEngine processEngine;
 
   @Override
   public void handleEvent(HistoryEvent historyEvent) {
-    
     if(historyEvent.isEventOfType(HistoryEventTypes.INCIDENT_CREATE)){
-      //LoggerFactory.getLogger(this.getClass()).trace("Plugin is working {} and this is a incident create !!!", historyEvent);;
       if (historyEvent instanceof HistoricIncidentEventEntity) {
         if(processEngine!=null){
             boolean skip = false;
@@ -46,25 +45,28 @@ public class CreateIMIncidentHandler implements HistoryEventHandler {
             
             LoggerFactory.getLogger(this.getClass()).info("The skip variable is {}", skip);
             if(!skip){
-              HistoricIncidentEventEntity incidentEventEntity = (HistoricIncidentEventEntity) historyEvent;
-              String incidentMessage = incidentEventEntity.getIncidentMessage();
-              String processInstanceId = incidentEventEntity.getProcessInstanceId();
-              LoggerFactory.getLogger(this.getClass()).warn("We should create an HPSM Incident here with message : {} for process {}", incidentMessage, processInstanceId);
               
-              try {
-                HashMap<String, Object> initialVariables = new HashMap<>();
-                initialVariables.put("message", incidentMessage);
-                initialVariables.put("processInstanceId", processInstanceId);
-                initialVariables.put("incidentEventEntity", incidentEventEntity);
-                ProcessInstance imPs = processEngine.getRuntimeService().startProcessInstanceByKey("CreateIM", initialVariables);
-                LoggerFactory.getLogger(this.getClass()).info("Created CreateIM process {}", imPs.getProcessInstanceId());
-              } catch (Throwable e) {
-                LoggerFactory.getLogger(this.getClass()).info("Failed to Created CreateIM process");
-                e.printStackTrace();
+              long createIMCount = processEngine.getRepositoryService().createProcessDefinitionQuery().processDefinitionKey(incidentWorkflowKey).active().count();
+              
+              if (createIMCount>0) {
+                HistoricIncidentEventEntity incidentEventEntity = (HistoricIncidentEventEntity) historyEvent;
+                String incidentMessage = incidentEventEntity.getIncidentMessage();
+                String processInstanceId = incidentEventEntity.getProcessInstanceId();
+                LoggerFactory.getLogger(this.getClass()).warn("We should create an HPSM Incident here with message : {} for process {}", incidentMessage, processInstanceId);
+                try {
+                  HashMap<String, Object> initialVariables = new HashMap<>();
+                  initialVariables.put("message", incidentMessage);
+                  initialVariables.put("processInstanceId", processInstanceId);
+                  initialVariables.put("incidentEventEntity", incidentEventEntity);
+                  ProcessInstance incidentProcesss = processEngine.getRuntimeService().startProcessInstanceByKey(incidentWorkflowKey, initialVariables);
+                  LoggerFactory.getLogger(this.getClass()).info("Created {} process {}", incidentWorkflowKey, incidentProcesss.getProcessInstanceId());
+                } catch (Throwable e) {
+                  LoggerFactory.getLogger(this.getClass()).error("Failed to Created "+incidentWorkflowKey+" process", e);
+                } 
               }
             }
         }else{
-          LoggerFactory.getLogger(this.getClass()).error("Trying to handle an incident without have processEngine availble");
+          LoggerFactory.getLogger(this.getClass()).error("Trying to handle an incident without having processEngine availble");
         }
       }
     }
@@ -80,6 +82,14 @@ public class CreateIMIncidentHandler implements HistoryEventHandler {
 
   public void setProcessEngine(ProcessEngine processEngine) {
     this.processEngine = processEngine;
+  }
+
+  public String getIncidentWorkflowKey() {
+    return incidentWorkflowKey;
+  }
+
+  public void setIncidentWorkflowKey(String incidentWorkflowKey) {
+    this.incidentWorkflowKey = incidentWorkflowKey;
   }
 
 }
