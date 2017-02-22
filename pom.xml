@@ -61,4 +61,39 @@
       </plugin>
     </plugins>
   </build>
+  
+  <profiles>
+    <profile>
+      <id>localDeploy</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-resources-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>copy to wildfly</id>
+                <phase>package</phase>
+                <goals>
+                  <goal>copy-resources</goal>
+                </goals>
+                <configuration>
+                  <resources>
+                    <resource>
+                      <directory>${project.build.directory}</directory>
+                      <include>${project.build.finalName}.${project.packaging}</include>
+                      <filtering>false</filtering>
+                    </resource>
+                  </resources>
+                  <overwrite>true</overwrite>
+                  <outputDirectory>${env.CAMUNDA_WILDFLY_HOME}\modules\be\nrb\o2\camunda\incident-handler-plugin\main\</outputDirectory>
+                  <encoding>UTF-8</encoding>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
 </project>

@@ -6,6 +6,7 @@
     <module name="org.camunda.bpm.camunda-engine" />
     <module name="org.camunda.bpm.model.camunda-bpmn-model" />
     <module name="org.slf4j" />
+    <module name="javax.api"/>
   </dependencies>
   <!-- Consider adding dependency : 
   <module name="be.nrb.o2.camunda.incident-handler-plugin"/>
