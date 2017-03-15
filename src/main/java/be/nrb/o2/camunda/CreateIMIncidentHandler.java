@@ -29,42 +29,48 @@ public class CreateIMIncidentHandler implements HistoryEventHandler, CreateIMInc
         if(processEngine!=null){
             if (enabled) {
               boolean skip = false;
-              BpmnModelInstance modelInstance = processEngine.getRepositoryService().getBpmnModelInstance(historyEvent.getProcessDefinitionId());
-              Process process = (Process) modelInstance.getDefinitions().getUniqueChildElementByType(Process.class);
-              ExtensionElements extensionElements = process.getExtensionElements();
-              if (extensionElements != null) {
-                CamundaProperties camundaProperties = extensionElements.getElementsQuery().filterByType(CamundaProperties.class).singleResult();
-                for (CamundaProperty camundaProperty : camundaProperties.getCamundaProperties()) {
-                  LoggerFactory.getLogger(this.getClass()).info("Checking process extension camunda property {}", camundaProperty.getCamundaName());
-                  if (camundaProperty.getCamundaName().equals("skipIncident")) {
-                    LoggerFactory.getLogger(this.getClass()).info("The skipIncident is {}", camundaProperty.getCamundaValue());
-                    skip = Boolean.parseBoolean(camundaProperty.getCamundaValue());
+              String processDefinitionId = historyEvent.getProcessDefinitionId();
+              if (processDefinitionId!=null && processDefinitionId.length()>0) {
+                BpmnModelInstance modelInstance = processEngine.getRepositoryService().getBpmnModelInstance(processDefinitionId);
+                Process process = (Process) modelInstance.getDefinitions().getUniqueChildElementByType(Process.class);
+                ExtensionElements extensionElements = process.getExtensionElements();
+                if (extensionElements != null) {
+                  CamundaProperties camundaProperties = extensionElements.getElementsQuery().filterByType(CamundaProperties.class).singleResult();
+                  for (CamundaProperty camundaProperty : camundaProperties.getCamundaProperties()) {
+                    LoggerFactory.getLogger(this.getClass()).info("Checking process extension camunda property {}", camundaProperty.getCamundaName());
+                    if (camundaProperty.getCamundaName().equals("skipIncident")) {
+                      LoggerFactory.getLogger(this.getClass()).info("The skipIncident is {}", camundaProperty.getCamundaValue());
+                      skip = Boolean.parseBoolean(camundaProperty.getCamundaValue());
+                    }
                   }
+                } else {
+                  LoggerFactory.getLogger(this.getClass()).info("The process model doesn't contain any extension element");
                 }
-              } else {
-                LoggerFactory.getLogger(this.getClass()).info("The process model doesn't contain any extension element");
-              }
-              LoggerFactory.getLogger(this.getClass()).info("The skip variable is {}", skip);
-              if (!skip) {
+                LoggerFactory.getLogger(this.getClass()).info("The skip variable is {}", skip);
+                if (!skip) {
 
-                long createIMCount = processEngine.getRepositoryService().createProcessDefinitionQuery().processDefinitionKey(incidentWorkflowKey).active().count();
+                  long createIMCount = processEngine.getRepositoryService().createProcessDefinitionQuery().processDefinitionKey(incidentWorkflowKey).active().count();
 
-                if (createIMCount > 0) {
-                  HistoricIncidentEventEntity incidentEventEntity = (HistoricIncidentEventEntity) historyEvent;
-                  String incidentMessage = incidentEventEntity.getIncidentMessage();
-                  String processInstanceId = incidentEventEntity.getProcessInstanceId();
-                  LoggerFactory.getLogger(this.getClass()).warn("We should create an HPSM Incident here with message : {} for process {}", incidentMessage, processInstanceId);
-                  try {
-                    HashMap<String, Object> initialVariables = new HashMap<>();
-                    initialVariables.put("message", incidentMessage);
-                    initialVariables.put("processInstanceId", processInstanceId);
-                    initialVariables.put("incidentEventEntity", incidentEventEntity);
-                    ProcessInstance incidentProcesss = processEngine.getRuntimeService().startProcessInstanceByKey(incidentWorkflowKey, initialVariables);
-                    LoggerFactory.getLogger(this.getClass()).info("Created {} process {}", incidentWorkflowKey, incidentProcesss.getProcessInstanceId());
-                  } catch (Throwable e) {
-                    LoggerFactory.getLogger(this.getClass()).error("Failed to Created " + incidentWorkflowKey + " process", e);
+                  if (createIMCount > 0) {
+                    HistoricIncidentEventEntity incidentEventEntity = (HistoricIncidentEventEntity) historyEvent;
+                    String incidentMessage = incidentEventEntity.getIncidentMessage();
+                    String processInstanceId = incidentEventEntity.getProcessInstanceId();
+                    if (incidentMessage == null || incidentMessage.length() == 0) {
+                      incidentMessage = String.format("A camunda incident have occured in process %s", processInstanceId);
+                    }
+                    LoggerFactory.getLogger(this.getClass()).warn("We should create an HPSM Incident here with message : {} for process {}", incidentMessage, processInstanceId);
+                    try {
+                      HashMap<String, Object> initialVariables = new HashMap<>();
+                      initialVariables.put("message", incidentMessage);
+                      initialVariables.put("processInstanceId", processInstanceId);
+                      initialVariables.put("incidentEventEntity", incidentEventEntity);
+                      ProcessInstance incidentProcesss = processEngine.getRuntimeService().startProcessInstanceByKey(incidentWorkflowKey, initialVariables);
+                      LoggerFactory.getLogger(this.getClass()).info("Created {} process {}", incidentWorkflowKey, incidentProcesss.getProcessInstanceId());
+                    } catch (Throwable e) {
+                      LoggerFactory.getLogger(this.getClass()).error("Failed to Created " + incidentWorkflowKey + " process", e);
+                    }
                   }
-                }
+                } 
               } 
             }else{
               LoggerFactory.getLogger(this.getClass()).info("An incident occured but IncidentHandlerPlugin is not enabled");
