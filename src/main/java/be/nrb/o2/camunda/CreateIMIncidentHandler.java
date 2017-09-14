@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.List;
 
 import org.camunda.bpm.engine.ProcessEngine;
+import org.camunda.bpm.engine.history.HistoricProcessInstance;
 import org.camunda.bpm.engine.impl.history.event.HistoricIncidentEventEntity;
 import org.camunda.bpm.engine.impl.history.event.HistoryEvent;
 import org.camunda.bpm.engine.impl.history.event.HistoryEventTypes;
@@ -50,7 +51,7 @@ public class CreateIMIncidentHandler implements HistoryEventHandler, CreateIMInc
                 if (!skip) {
 
                   long createIMCount = processEngine.getRepositoryService().createProcessDefinitionQuery().processDefinitionKey(incidentWorkflowKey).active().count();
-
+                  
                   if (createIMCount > 0) {
                     HistoricIncidentEventEntity incidentEventEntity = (HistoricIncidentEventEntity) historyEvent;
                     String incidentMessage = incidentEventEntity.getIncidentMessage();
@@ -58,7 +59,9 @@ public class CreateIMIncidentHandler implements HistoryEventHandler, CreateIMInc
                     
                     LoggerFactory.getLogger(this.getClass()).info("An incident occured in {} with process instance id {}", process.getName(), processInstanceId);
                     
-                    String parentProcessInstanceId = processEngine.getHistoryService().createHistoricProcessInstanceQuery().processInstanceId(processInstanceId).singleResult().getSuperProcessInstanceId();
+                    HistoricProcessInstance historicProcessInstance = processEngine.getHistoryService().createHistoricProcessInstanceQuery().processInstanceId(processInstanceId).singleResult();
+                    String parentProcessInstanceId = historicProcessInstance.getSuperProcessInstanceId();
+                    LoggerFactory.getLogger(this.getClass()).info("The process with name:{} {} has parent {}", process.getName(), historicProcessInstance, parentProcessInstanceId);
                     
                     if (parentProcessInstanceId==null) {
                       if (incidentMessage == null || incidentMessage.length() == 0) {
