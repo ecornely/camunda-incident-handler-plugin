@@ -2,15 +2,26 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>be.nrb.o2.camunda</groupId>
   <artifactId>incident-handler-plugin</artifactId>
-  <version>1.0-SNAPSHOT</version>
+  <version>1.1</version>
   <properties>
-    <camunda.version>7.6.0-ee</camunda.version>
+    <camunda.version>7.7.3-ee</camunda.version>
     <maven.compiler.source>8</maven.compiler.source>
     <maven.compiler.target>8</maven.compiler.target>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <failOnMissingWebXml>false</failOnMissingWebXml>
     <spring.version>3.1.2-RELEASE</spring.version>
   </properties>
+  
+   <distributionManagement>
+    <snapshotRepository>
+      <id>nexus-o2-snapshot</id>
+      <url>http://nexus-o2.nrb.be/repository/maven-snapshots/</url>
+    </snapshotRepository>
+    <repository>
+      <id>nexus-o2-release</id>
+      <url>http://nexus-o2.nrb.be/repository/maven-releases/</url>
+    </repository>
+  </distributionManagement>
 
   <dependencyManagement>
     <dependencies>

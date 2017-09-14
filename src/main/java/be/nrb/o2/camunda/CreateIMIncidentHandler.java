@@ -44,7 +44,7 @@ public class CreateIMIncidentHandler implements HistoryEventHandler, CreateIMInc
                     }
                   }
                 } else {
-                  LoggerFactory.getLogger(this.getClass()).info("The process model doesn't contain any extension element");
+                  LoggerFactory.getLogger(this.getClass()).info("The process model "+process.getName()+" doesn't contain any extension element");
                 }
                 LoggerFactory.getLogger(this.getClass()).info("The skip variable is {}", skip);
                 if (!skip) {
@@ -55,22 +55,34 @@ public class CreateIMIncidentHandler implements HistoryEventHandler, CreateIMInc
                     HistoricIncidentEventEntity incidentEventEntity = (HistoricIncidentEventEntity) historyEvent;
                     String incidentMessage = incidentEventEntity.getIncidentMessage();
                     String processInstanceId = incidentEventEntity.getProcessInstanceId();
-                    if (incidentMessage == null || incidentMessage.length() == 0) {
-                      incidentMessage = String.format("A camunda incident have occured in process %s", processInstanceId);
+                    
+                    LoggerFactory.getLogger(this.getClass()).info("An incident occured in {} with process instance id {}", process.getName(), processInstanceId);
+                    
+                    String parentProcessInstanceId = processEngine.getHistoryService().createHistoricProcessInstanceQuery().processInstanceId(processInstanceId).singleResult().getSuperProcessInstanceId();
+                    
+                    if (parentProcessInstanceId==null) {
+                      if (incidentMessage == null || incidentMessage.length() == 0) {
+                        incidentMessage = String.format("A camunda incident have occured in process %s", processInstanceId);
+                      }
+                      try {
+                        HashMap<String, Object> initialVariables = new HashMap<>();
+                        initialVariables.put("message", incidentMessage);
+                        initialVariables.put("processInstanceId", processInstanceId);
+                        initialVariables.put("incidentEventEntity", incidentEventEntity);
+                        ProcessInstance incidentProcesss = processEngine.getRuntimeService().startProcessInstanceByKey(incidentWorkflowKey, initialVariables);
+                        LoggerFactory.getLogger(this.getClass()).info("Created {} process {}", incidentWorkflowKey, incidentProcesss.getProcessInstanceId());
+                      } catch (Throwable e) {
+                        LoggerFactory.getLogger(this.getClass()).error("Failed to Created " + incidentWorkflowKey + " process", e);
+                      } 
+                    }else {
+                      LoggerFactory.getLogger(this.getClass()).warn("Bypass im creation because "+processInstanceId+" is a subprocess of "+parentProcessInstanceId);
                     }
-                    LoggerFactory.getLogger(this.getClass()).warn("We should create an HPSM Incident here with message : {} for process {}", incidentMessage, processInstanceId);
-                    try {
-                      HashMap<String, Object> initialVariables = new HashMap<>();
-                      initialVariables.put("message", incidentMessage);
-                      initialVariables.put("processInstanceId", processInstanceId);
-                      initialVariables.put("incidentEventEntity", incidentEventEntity);
-                      ProcessInstance incidentProcesss = processEngine.getRuntimeService().startProcessInstanceByKey(incidentWorkflowKey, initialVariables);
-                      LoggerFactory.getLogger(this.getClass()).info("Created {} process {}", incidentWorkflowKey, incidentProcesss.getProcessInstanceId());
-                    } catch (Throwable e) {
-                      LoggerFactory.getLogger(this.getClass()).error("Failed to Created " + incidentWorkflowKey + " process", e);
-                    }
+                  }else {
+                    LoggerFactory.getLogger(this.getClass()).info("Unable to find workflow with key "+incidentWorkflowKey);
                   }
-                } 
+                }else {
+                  LoggerFactory.getLogger(this.getClass()).debug("Incident notification skipped for process:{}", process.getName());
+                }
               } 
             }else{
               LoggerFactory.getLogger(this.getClass()).info("An incident occured but IncidentHandlerPlugin is not enabled");
