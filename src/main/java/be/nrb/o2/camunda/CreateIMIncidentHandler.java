@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.camunda.bpm.engine.ProcessEngine;
 import org.camunda.bpm.engine.history.HistoricProcessInstance;
+import org.camunda.bpm.engine.history.HistoricVariableInstance;
 import org.camunda.bpm.engine.impl.history.event.HistoricIncidentEventEntity;
 import org.camunda.bpm.engine.impl.history.event.HistoryEvent;
 import org.camunda.bpm.engine.impl.history.event.HistoryEventTypes;
@@ -77,9 +78,29 @@ public class CreateIMIncidentHandler implements HistoryEventHandler, CreateIMInc
                         initialVariables.put("message", incidentMessage);
                         initialVariables.put("processInstanceId", processInstanceId);
                         initialVariables.put("incidentEventEntity", incidentEventEntity);
+                        
                         if(imAssignment!=null && !imAssignment.isEmpty()) {
+                          LoggerFactory.getLogger(this.getClass()).info("Found imAssignment in extensions with value : {}", imAssignment);
                           initialVariables.put("imAssignment", imAssignment);
+                        }else {
+                          try {
+                            HistoricVariableInstance variableInstance = processEngine.getHistoryService().createHistoricVariableInstanceQuery().processInstanceId(processInstanceId).variableName("imAssignment").singleResult();
+                            LoggerFactory.getLogger(this.getClass()).debug("Trying to find existing variable imAssignment in process history {}: {}", processInstanceId, variableInstance);
+                            if(variableInstance!=null) {
+                              Object historicImAssignment = variableInstance.getValue();
+                              LoggerFactory.getLogger(this.getClass()).debug("Read imAssignment value {}", historicImAssignment);
+                              if(historicImAssignment!=null) {
+                                initialVariables.put("imAssignment", historicImAssignment);
+                                LoggerFactory.getLogger(this.getClass()).debug("Set imAssignment value {} from history of {}", historicImAssignment, processInstanceId);
+                              }
+                            }
+                          } catch (Exception e) {
+                            LoggerFactory.getLogger(this.getClass()).warn("Unable to get variable with name imAssignment on process "+processInstanceId, e);
+                          }
                         }
+                        //TODO get historic values for 
+                        /*imDescription, imShortDescription, imContactName, imCI, imImpact, imUgency, imCustomerName, imSubcategory, imProductType, imCustomerReference */
+                        
                         ProcessInstance incidentProcesss = processEngine.getRuntimeService().startProcessInstanceByKey(incidentWorkflowKey, initialVariables);
                         LoggerFactory.getLogger(this.getClass()).info("Created {} process {}", incidentWorkflowKey, incidentProcesss.getProcessInstanceId());
                       } catch (Throwable e) {
