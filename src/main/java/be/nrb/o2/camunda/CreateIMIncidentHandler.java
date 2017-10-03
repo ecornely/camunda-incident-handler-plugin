@@ -30,6 +30,7 @@ public class CreateIMIncidentHandler implements HistoryEventHandler, CreateIMInc
         if(processEngine!=null){
             if (enabled) {
               boolean skip = false;
+              String imAssignment = null;
               String processDefinitionId = historyEvent.getProcessDefinitionId();
               if (processDefinitionId!=null && processDefinitionId.length()>0) {
                 BpmnModelInstance modelInstance = processEngine.getRepositoryService().getBpmnModelInstance(processDefinitionId);
@@ -42,6 +43,10 @@ public class CreateIMIncidentHandler implements HistoryEventHandler, CreateIMInc
                     if (camundaProperty.getCamundaName().equals("skipIncident")) {
                       LoggerFactory.getLogger(this.getClass()).info("The skipIncident is {}", camundaProperty.getCamundaValue());
                       skip = Boolean.parseBoolean(camundaProperty.getCamundaValue());
+                    }
+                    if (camundaProperty.getCamundaName().equals("imAssignment")) {
+                      LoggerFactory.getLogger(this.getClass()).info("The imAssignment is {}", camundaProperty.getCamundaValue());
+                      imAssignment = camundaProperty.getCamundaValue();
                     }
                   }
                 } else {
@@ -72,6 +77,9 @@ public class CreateIMIncidentHandler implements HistoryEventHandler, CreateIMInc
                         initialVariables.put("message", incidentMessage);
                         initialVariables.put("processInstanceId", processInstanceId);
                         initialVariables.put("incidentEventEntity", incidentEventEntity);
+                        if(imAssignment!=null && !imAssignment.isEmpty()) {
+                          initialVariables.put("imAssignment", imAssignment);
+                        }
                         ProcessInstance incidentProcesss = processEngine.getRuntimeService().startProcessInstanceByKey(incidentWorkflowKey, initialVariables);
                         LoggerFactory.getLogger(this.getClass()).info("Created {} process {}", incidentWorkflowKey, incidentProcesss.getProcessInstanceId());
                       } catch (Throwable e) {
