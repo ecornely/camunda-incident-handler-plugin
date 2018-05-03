@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>be.nrb.o2.camunda</groupId>
   <artifactId>incident-handler-plugin</artifactId>
-  <version>1.1</version>
+  <version>1.1.1</version>
   <properties>
     <camunda.version>7.7.3-ee</camunda.version>
     <maven.compiler.source>8</maven.compiler.source>

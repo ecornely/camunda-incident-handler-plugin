@@ -20,7 +20,7 @@ import org.slf4j.LoggerFactory;
 
 public class CreateIMIncidentHandler implements HistoryEventHandler, CreateIMIncidentHandlerMBean {
 
-  private String incidentWorkflowKey = "CreateIM";
+  private String incidentWorkflowKey = "be.nrb.o2.CreateIM";
   private ProcessEngine processEngine;
   private boolean enabled = true;
 
@@ -120,7 +120,7 @@ public class CreateIMIncidentHandler implements HistoryEventHandler, CreateIMInc
               LoggerFactory.getLogger(this.getClass()).info("An incident occured but IncidentHandlerPlugin is not enabled");
             }
         }else{
-          LoggerFactory.getLogger(this.getClass()).error("Trying to handle an incident without having processEngine availble");
+          LoggerFactory.getLogger(this.getClass()).error("Trying to handle an incident without having processEngine available");
         }
       }
     }
